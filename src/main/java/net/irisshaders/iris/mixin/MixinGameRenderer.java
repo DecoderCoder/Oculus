@@ -12,6 +12,7 @@ import net.irisshaders.iris.pipeline.ShaderRenderingPipeline;
 import net.irisshaders.iris.pipeline.WorldRenderingPhase;
 import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
 import net.irisshaders.iris.pipeline.programs.ShaderKey;
+import net.irisshaders.iris.shaderpack.materialmap.WorldRenderingSettings;
 import net.irisshaders.iris.shadows.ShadowRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -139,6 +140,8 @@ public class MixinGameRenderer {
 	private static void iris$overrideTranslucentShader(CallbackInfoReturnable<ShaderInstance> cir) {
 		if (ShadowRenderer.ACTIVE) {
 			override(ShaderKey.SHADOW_TERRAIN_CUTOUT, cir);
+		} else if (isBlockEntities() && WorldRenderingSettings.INSTANCE.shouldSeparateEntityDraws()) {
+			override(ShaderKey.MOVING_BLOCK_TRANSLUCENT, cir);
 		} else if (isBlockEntities() || isEntities()) {
 			override(ShaderKey.MOVING_BLOCK, cir);
 		} else if (shouldOverrideShaders()) {
