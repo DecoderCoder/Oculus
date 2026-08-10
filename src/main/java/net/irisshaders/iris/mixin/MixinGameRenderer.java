@@ -8,6 +8,7 @@ import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.api.v0.IrisApi;
 import net.irisshaders.iris.gl.program.IrisProgramTypes;
 import net.irisshaders.iris.pathways.HandRenderer;
+import net.irisshaders.iris.pipeline.IrisRenderingPipeline;
 import net.irisshaders.iris.pipeline.ShaderRenderingPipeline;
 import net.irisshaders.iris.pipeline.WorldRenderingPhase;
 import net.irisshaders.iris.pipeline.WorldRenderingPipeline;
@@ -110,6 +111,8 @@ public class MixinGameRenderer {
 		if (ShadowRenderer.ACTIVE) {
 			// TODO: Wrong program
 			override(ShaderKey.SHADOW_TERRAIN_CUTOUT, cir);
+		} else if (isLateTerrainDraw()) {
+			override(ShaderKey.TERRAIN_TRANSLUCENT, cir);
 		} else if (isBlockEntities() || isEntities()) {
 			override(ShaderKey.MOVING_BLOCK, cir);
 		} else if (shouldOverrideShaders()) {
@@ -124,6 +127,8 @@ public class MixinGameRenderer {
 	private static void iris$overrideCutoutShader(CallbackInfoReturnable<ShaderInstance> cir) {
 		if (ShadowRenderer.ACTIVE) {
 			override(ShaderKey.SHADOW_TERRAIN_CUTOUT, cir);
+		} else if (isLateTerrainDraw()) {
+			override(ShaderKey.TERRAIN_TRANSLUCENT_CUTOUT, cir);
 		} else if (isBlockEntities() || isEntities()) {
 			override(ShaderKey.MOVING_BLOCK, cir);
 		} else if (shouldOverrideShaders()) {
@@ -394,6 +399,14 @@ public class MixinGameRenderer {
 		WorldRenderingPipeline pipeline = Iris.getPipelineManager().getPipelineNullable();
 
 		return pipeline != null && pipeline.getPhase() == WorldRenderingPhase.ENTITIES;
+	}
+
+	private static boolean isLateTerrainDraw() {
+		WorldRenderingPipeline pipeline = Iris.getPipelineManager().getPipelineNullable();
+
+		return pipeline instanceof IrisRenderingPipeline iris && iris.shouldOverrideShaders()
+			&& WorldRenderingSettings.INSTANCE.shouldSeparateEntityDraws() && !iris.isBeforeTranslucent
+			&& iris.getPhase() == WorldRenderingPhase.NONE;
 	}
 
 	private static boolean isSky() {
